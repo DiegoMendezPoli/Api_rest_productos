@@ -18,31 +18,24 @@ public class ProductsController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<Product>), StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<Product>> GetAll()
-    {
-        return Ok(_productService.GetAll());
-    }
+    public async Task<ActionResult<IEnumerable<Product>>> GetAll()
+        => Ok(await _productService.GetAllAsync());
 
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(Product), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<Product> GetById(int id)
+    public async Task<ActionResult<Product>> GetById(int id)
     {
-        var product = _productService.GetById(id);
-        if (product is null)
-        {
-            return NotFound();
-        }
-
-        return Ok(product);
+        var product = await _productService.GetByIdAsync(id);
+        return product is null ? NotFound() : Ok(product);
     }
 
     [HttpPost]
     [ProducesResponseType(typeof(Product), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<Product> Create([FromBody] CreateProductDto dto)
+    public async Task<ActionResult<Product>> Create([FromBody] CreateProductDto dto)
     {
-        var product = _productService.Create(dto);
+        var product = await _productService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
 
@@ -50,18 +43,18 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult Update(int id, [FromBody] UpdateProductDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
-        var updated = _productService.Update(id, dto);
+        var updated = await _productService.UpdateAsync(id, dto);
         return updated ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var deleted = _productService.Delete(id);
+        var deleted = await _productService.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
 }

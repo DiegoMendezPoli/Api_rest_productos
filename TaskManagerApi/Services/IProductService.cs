@@ -5,9 +5,9 @@ namespace TaskManagerApi.Services;
 
 public interface IProductService
 {
-    IEnumerable<Product> GetAll();
-    Product? GetById(int id);
-    Product Create(CreateProductDto dto);
-    bool Update(int id, UpdateProductDto dto);
-    bool Delete(int id);
+    Task<IEnumerable<Product>> GetAllAsync();
+    Task<Product?> GetByIdAsync(int id);
+    Task<Product> CreateAsync(CreateProductDto dto);
+    Task<bool> UpdateAsync(int id, UpdateProductDto dto);
+    Task<bool> DeleteAsync(int id);
 }

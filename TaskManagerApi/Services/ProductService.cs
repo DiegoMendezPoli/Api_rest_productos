@@ -1,96 +1,52 @@
+using Microsoft.EntityFrameworkCore;
+using TaskManagerApi.Data;
 using TaskManagerApi.DTOs;
 using TaskManagerApi.Models;
 
 namespace TaskManagerApi.Services;
 
-public class ProductService : IProductService
+public class ProductService(AppDbContext db) : IProductService
 {
-    private readonly List<Product> _products = [];
-    private readonly object _lock = new();
-    private int _nextId = 1;
+    public async Task<IEnumerable<Product>> GetAllAsync()
+        => await db.Products.AsNoTracking().ToListAsync();
 
-    public IEnumerable<Product> GetAll()
+    public async Task<Product?> GetByIdAsync(int id)
+        => await db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+
+    public async Task<Product> CreateAsync(CreateProductDto dto)
     {
-        lock (_lock)
+        var product = new Product
         {
-            return _products
-                .Select(product => new Product
-                {
-                    Id = product.Id,
-                    Nombre = product.Nombre,
-                    Precio = product.Precio,
-                    Stock = product.Stock,
-                    FechaCreacion = product.FechaCreacion
-                })
-                .ToList();
-        }
+            Nombre = dto.Nombre.Trim(),
+            Precio = dto.Precio,
+            Stock = dto.Stock,
+            FechaCreacion = DateTime.UtcNow
+        };
+
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        return product;
     }
 
-    public Product? GetById(int id)
+    public async Task<bool> UpdateAsync(int id, UpdateProductDto dto)
     {
-        lock (_lock)
-        {
-            var product = _products.FirstOrDefault(p => p.Id == id);
-            return product is null
-                ? null
-                : new Product
-                {
-                    Id = product.Id,
-                    Nombre = product.Nombre,
-                    Precio = product.Precio,
-                    Stock = product.Stock,
-                    FechaCreacion = product.FechaCreacion
-                };
-        }
+        var product = await db.Products.FindAsync(id);
+        if (product is null) return false;
+
+        product.Nombre = dto.Nombre.Trim();
+        product.Precio = dto.Precio;
+        product.Stock = dto.Stock;
+        await db.SaveChangesAsync();
+        return true;
     }
 
-    public Product Create(CreateProductDto dto)
+    public async Task<bool> DeleteAsync(int id)
     {
-        lock (_lock)
-        {
-            var product = new Product
-            {
-                Id = _nextId++,
-                Nombre = dto.Nombre.Trim(),
-                Precio = dto.Precio,
-                Stock = dto.Stock,
-                FechaCreacion = DateTime.UtcNow
-            };
+        var product = await db.Products.FindAsync(id);
+        if (product is null) return false;
 
-            _products.Add(product);
-            return product;
-        }
-    }
-
-    public bool Update(int id, UpdateProductDto dto)
-    {
-        lock (_lock)
-        {
-            var product = _products.FirstOrDefault(p => p.Id == id);
-            if (product is null)
-            {
-                return false;
-            }
-
-            product.Nombre = dto.Nombre.Trim();
-            product.Precio = dto.Precio;
-            product.Stock = dto.Stock;
-            return true;
-        }
-    }
-
-    public bool Delete(int id)
-    {
-        lock (_lock)
-        {
-            var product = _products.FirstOrDefault(p => p.Id == id);
-            if (product is null)
-            {
-                return false;
-            }
-
-            _products.Remove(product);
-            return true;
-        }
+        db.Products.Remove(product);
+        await db.SaveChangesAsync();
+        return true;
     }
 }
