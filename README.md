@@ -12,7 +12,7 @@
 
 ## 🛠️ Prerequisitos
 
-Tu proyecto requiere estas herramientas instaladas:
+El proyecto requiere estas herramientas instaladas:
 
 | Herramienta | Versión Mínima | Propósito |
 |-------------|-----------------|----------|
