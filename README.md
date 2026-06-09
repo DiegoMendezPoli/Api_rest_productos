@@ -460,5 +460,5 @@ docker-compose down
 
 ---
 
-**Última actualización:** 25 de mayo de 2026
+**Última actualización:** 9 de junio de 2026
 **Versión:** 1.0
