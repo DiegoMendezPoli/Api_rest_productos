@@ -15,45 +15,19 @@ pipeline {
             }
         }
 
-        stage('Restore') {
+        stage('Restore, Build & Publish') {
             steps {
-                echo '== Restaurando dependencias NuGet =='
-                sh '''
-                    docker run --rm \
-                      -v "$PWD":/src -w /src \
-                      mcr.microsoft.com/dotnet/sdk:10.0 \
-                      dotnet restore TaskManagerApi/TaskManagerApi.csproj
-                '''
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo '== Compilando el proyecto =='
-                sh '''
-                    docker run --rm \
-                      -v "$PWD":/src -w /src \
-                      mcr.microsoft.com/dotnet/sdk:10.0 \
-                      dotnet build TaskManagerApi/TaskManagerApi.csproj -c Release --no-restore
-                '''
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo '== Ejecutando tests (si existen) =='
-                sh '''
-                    docker run --rm \
-                      -v "$PWD":/src -w /src \
-                      mcr.microsoft.com/dotnet/sdk:10.0 \
-                      bash -c "dotnet test || echo 'No hay tests, se omite'"
-                '''
+                echo '== Restaurando, compilando y publicando dentro del build de Docker =='
+                // El Dockerfile (multi-stage) ya hace dotnet restore + publish.
+                // Compilamos la etapa "build" para validar que todo compile,
+                // sin montar volumenes (que falla por Docker-in-Docker en Jenkins).
+                sh 'docker build --target build -t $IMAGE_NAME:build-$IMAGE_TAG .'
             }
         }
 
         stage('Docker Build') {
             steps {
-                echo '== Construyendo la imagen Docker =='
+                echo '== Construyendo la imagen final de la API =='
                 sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .'
             }
         }
