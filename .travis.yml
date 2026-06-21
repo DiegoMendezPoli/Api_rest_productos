@@ -1,19 +1,28 @@
-language: generic
-
+language: minimal
+ 
 services:
   - docker
-
-before_install:
-  - docker --version
-  - docker compose version || docker-compose --version
-
-script:
-  - docker build --target build -t api-productos-build .
-  - docker build -t api-productos:travis .
-  - docker compose up -d || docker-compose up -d
-  - docker ps
-  - sleep 15
-  - docker compose ps || docker-compose ps
-
-after_script:
-  - docker compose down || docker-compose down
+ 
+# Etapas del pipeline
+jobs:
+  include:
+    - stage: build
+      script:
+        # Construir la imagen con tu Dockerfile
+        - docker build -t taskmanagerapi .
+ 
+    - stage: test
+      script:
+        # Ejecutar la imagen y correr pruebas
+        - docker run -d -p 8080:8080 --name taskmanagerapi taskmanagerapi
+        # Aquí puedes añadir comandos para validar que el contenedor está corriendo
+        # Por ejemplo, usar curl para verificar el endpoint de salud
+        - docker ps
+        - curl http://localhost:8080/health || true
+ 
+    - stage: deploy
+      script:
+        # Aquí defines tu despliegue (ejemplo: push a DockerHub)
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker tag taskmanagerapi $DOCKER_USERNAME/taskmanagerapi:latest
+        - docker push $DOCKER_USERNAME/taskmanagerapi:latest
