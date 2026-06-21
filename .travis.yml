@@ -10,4 +10,10 @@ before_install:
 script:
   - docker build --target build -t api-productos-build .
   - docker build -t api-productos:travis .
-  - docker images | grep api-productos
+  - docker compose up -d || docker-compose up -d
+  - docker ps
+  - sleep 15
+  - docker compose ps || docker-compose ps
+
+after_script:
+  - docker compose down || docker-compose down
