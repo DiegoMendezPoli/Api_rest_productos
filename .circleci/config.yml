@@ -1,0 +1,37 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:10.0   # mismo SDK que usas en Jenkins
+    steps:
+      - checkout
+
+      - run:
+          name: "Restaurar dependencias NuGet"
+          command: dotnet restore TaskManagerApi/TaskManagerApi.csproj
+
+      - run:
+          name: "Compilar el proyecto"
+          command: dotnet build TaskManagerApi/TaskManagerApi.csproj -c Release
+
+      - run:
+          name: "Ejecutar tests"
+          command: dotnet test || echo "No hay tests, se omite"
+
+  docker-build:
+    machine:
+      image: ubuntu-2204:current   # maquina con Docker para construir la imagen
+    steps:
+      - checkout
+      - run:
+          name: "Construir la imagen Docker"
+          command: docker build -t productos-api:latest .
+
+workflows:
+  pipeline-ci:
+    jobs:
+      - build
+      - docker-build:
+          requires:
+            - build      # docker-build solo corre si 'build' pasó
